@@ -1,35 +1,41 @@
 const jwt = require('../../../../pkg/auth/jwt')
-const response = require('../../../../pkg/utils/response')
+const log = require('../../../../pkg/utils/logger')
+const wrapper = require('../../../../pkg/utils/wrapper')
+const errorCase = require('../../../../pkg/utils/error_case')
 
 
 // -------------------------------------------------
 // Auth Index Function
-async function index(req, res) {
-  let dataBody = JSON.parse(req.body)
+function index(req, res) {
+  let dataBody = req.body
 
   if (dataBody.username.length === 0 || dataBody.password.length === 0) {
-    response.resBadRequest(res, 'Invalid Authorizaton')
+    const msg = 'Invalid Authorization'
+    log.send('http-access').warn(msg)
+    wrapper.response(res, 'fail', wrapper.error(errorCase.badRequest('auth', msg)), 'Authorization')
     return
   }
 
-  response.resSuccessData(res, {
-    token: await jwt.getToken({username: dataBody.username}),
-    refreshToken: await jwt.getRefreshToken({username: dataBody.username})
-  })
+  const token = {
+    token: jwt.getToken({username: dataBody.username}),
+    refreshToken: jwt.getRefreshToken({username: dataBody.username})
+  }
+  wrapper.response(res, 'success', wrapper.data(token), 'Authorization')
 }
 
 
 // -------------------------------------------------
 // Auth Refresh Function
-async function refresh(req, res) {
+function refresh(req, res) {
   // Parse JWT Claims from Header
-  let dataClaims = await jwt.getClaims(res.get('X-JWT-Refresh'))
-  
+  let dataClaims = jwt.getClaims(res.get('X-JWT-Refresh'))
+
   // Response with JWT Claims
-  response.resSuccessData(res, {
-    token: await jwt.getToken({username: dataClaims.data.username}),
-    refreshToken: await jwt.getRefreshToken({username: dataClaims.data.username})
-  })
+  const token = {
+    token: jwt.getToken({username: dataClaims.data.username}),
+    refreshToken: jwt.getRefreshToken({username: dataClaims.data.username})
+  }
+  wrapper.response(res, 'success', wrapper.data(token), 'Authorization')
 }
 
 

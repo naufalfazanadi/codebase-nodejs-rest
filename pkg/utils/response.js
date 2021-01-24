@@ -22,6 +22,19 @@ function writeResponseData(res, statusCode, msg, data) {
 
 
 // -------------------------------------------------
+// Write Data Pagination Response Function
+function writeResponseDataPagination(res, statusCode, msg, data, meta) {
+  res.status(statusCode).json({
+    status: true,
+    code: statusCode,
+    message: msg,
+    meta: meta,
+    data: data
+  })
+}
+
+
+// -------------------------------------------------
 // Write Error Response Function
 function writeResponseError(res, statusCode, msg, err) {
   res.status(statusCode).json({
@@ -51,6 +64,13 @@ function resSuccessData(res, data) {
   writeResponseData(res, 200, 'Success', data)
 }
 
+// -------------------------------------------------
+// Success Data Response Function
+function resSuccessDataPagination(res, data, meta) {
+  // Write Response
+  writeResponseDataPagination(res, 200, 'Success', data, meta)
+}
+
 
 // -------------------------------------------------
 // Created Response Function
@@ -66,7 +86,6 @@ function resUpdated(res, data) {
   // Write Response
   writeResponseData(res, 200, 'Updated', data)
 }
-
 
 // -------------------------------------------------
 // Bad Request Response Function
@@ -122,6 +141,7 @@ function resAuthenticate(res) {
 module.exports = {
   resSuccess,
   resSuccessData,
+  resSuccessDataPagination,
   resCreated,
   resUpdated,
   resBadRequest,

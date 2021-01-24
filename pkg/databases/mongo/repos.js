@@ -1,35 +1,33 @@
 const validate = require('validate.js')
-
 const database = require('./dbs')
 
 const common = require('../../utils/common')
+const wrapper = require('../../utils/wrapper')
 const log = require('../../utils/logger')
+const { convertDefaultTimestamp } = require('../../utils/date_conversion')
 
 
 // -------------------------------------------------
 // DB Find Function
 async function find(coll, params, sort, limit, page) {
-  let ctx = 'mongo-repo-find'
-
   try {
-    let dbConnection = database.getConnection()
+    let dbConnection = await database.getConnection()
 
     let paramsSort = {}
     paramsSort[sort] = 1
-    
+
     let paramsPage = limit * (page - 1)
 
     let recordSet = await dbConnection.collection(coll).find(params).sort(paramsSort).limit(limit).skip(paramsPage).toArray()
 
     if (validate.isEmpty(recordSet)) {
-      log.warn(ctx, 'Empty RecordSet Data')
-      return
+      log.send('mongo-repo-find').warn('Empty RecordSet Data')
+      return wrapper.error('Empty RecordSet Data')
     }
-    
-    return recordSet
+    return wrapper.data(convertDefaultTimestamp(recordSet))
   } catch(err) {
-    log.error(ctx, common.strToTitleCase(err.message))
-    return
+    log.send('mongo-repo-find').error(common.strToTitleCase(err.message))
+    return wrapper.error(common.strToTitleCase(err.message))
   }
 }
 
@@ -37,43 +35,75 @@ async function find(coll, params, sort, limit, page) {
 // -------------------------------------------------
 // DB FindOne Function
 async function findOne(coll, params) {
-  let ctx = 'mongo-repo-find-one'
-
   try {
-    let dbConnection = database.getConnection()
+    let dbConnection = await database.getConnection()
     let recordSet = await dbConnection.collection(coll).findOne(params)
 
     if (validate.isEmpty(recordSet)) {
-      log.warn(ctx, 'Empty RecordSet Data')
-      return
+      log.send('mongo-repo-find-one').warn('Empty RecordSet Data')
+      return wrapper.error('Empty RecordSet Data')
     }
-
-    return recordSet
+    return wrapper.data(convertDefaultTimestamp(recordSet))
   } catch(err) {
-    log.error(ctx, common.strToTitleCase(err.message))
-    return
+    log.send('mongo-repo-find-one').error(common.strToTitleCase(err.message))
+    return wrapper.error(common.strToTitleCase(err.message))
   }
 }
 
 
 // -------------------------------------------------
-// DB FindAll Function
-async function findAll(coll, params) {
-  let ctx = 'mongo-repo-find-all'
-
+// DB findMany Function
+async function findMany(coll, params) {
   try {
-    let dbConnection = database.getConnection()
+    let dbConnection = await database.getConnection()
     let recordSet = await dbConnection.collection(coll).find(params).toArray()
 
     if (validate.isEmpty(recordSet)) {
-      log.warn(ctx, 'Empty RecordSet Data')
-      return
+      log.send('mongo-repo-find-all').warn('Empty RecordSet Data')
+      return wrapper.error('Empty RecordSet Data')
     }
-
-    return recordSet
+    return wrapper.data(convertDefaultTimestamp(recordSet))
   } catch(err) {
-    log.error(ctx, common.strToTitleCase(err.message))
-    return
+    log.send('mongo-repo-find-all').error(common.strToTitleCase(err.message))
+    return wrapper.error(common.strToTitleCase(err.message))
+  }
+}
+
+
+// -------------------------------------------------
+// DB findAggregateOne Function
+async function findAggregateOne(coll, params) {
+  try {
+    let dbConnection = await database.getConnection()
+    let recordSet = await dbConnection.collection(coll).aggregate(params, {collation: {locale: 'en'}}).toArray()
+
+    if (validate.isEmpty(recordSet)) {
+      log.send('mongo-repo-find-aggregate-one').warn('Empty RecordSet Data')
+      return wrapper.error('Empty RecordSet Data')
+    }
+    return wrapper.data(recordSet[0])
+  } catch(err) {
+    log.send('mongo-repo-find-aggregate-one').error(common.strToTitleCase(err.message))
+    return wrapper.error(common.strToTitleCase(err.message))
+  }
+}
+
+
+// -------------------------------------------------
+// DB findAggregate Function
+async function findAggregate(coll, params) {
+  try {
+    let dbConnection = await database.getConnection()
+    let recordSet = await dbConnection.collection(coll).aggregate(params, {collation: {locale: 'en'}}).toArray()
+
+    if (validate.isEmpty(recordSet)) {
+      log.send('mongo-repo-find-aggregate').warn('Empty RecordSet Data')
+      return wrapper.error('Empty RecordSet Data')
+    }
+    return wrapper.data(convertDefaultTimestamp(recordSet))
+  } catch(err) {
+    log.send('mongo-repo-find-aggregate').error(common.strToTitleCase(err.message))
+    return wrapper.error(common.strToTitleCase(err.message))
   }
 }
 
@@ -81,21 +111,18 @@ async function findAll(coll, params) {
 // -------------------------------------------------
 // DB InsertOne Function
 async function insertOne(coll, data) {
-  let ctx = 'mongo-repo-insert-one'
-
   try {
-    let dbConnection = database.getConnection()
+    let dbConnection = await database.getConnection()
     let recordSet = await dbConnection.collection(coll).insertOne(data)
 
     if (recordSet.result.n != 1) {
-      log.error(ctx, 'Failed to Insert Data')
-      return false
+      log.send('mongo-repo-insert-one').error('Failed to Insert Data')
+      return wrapper.error('Failed to Insert Data')
     }
-
-    return true
+    return wrapper.data(convertDefaultTimestamp(data))
   } catch(err) {
-    log.error(ctx, common.strToTitleCase(err.message))
-    return false
+    log.send('mongo-repo-insert-one').error(common.strToTitleCase(err.message))
+    return wrapper.error(common.strToTitleCase(err.message))
   }
 }
 
@@ -103,42 +130,36 @@ async function insertOne(coll, data) {
 // -------------------------------------------------
 // DB InsertAll Function
 async function insertAll(coll, data) {
-  let ctx = 'mongo-repo-insert-all'
-
   try {
-    let dbConnection = database.getConnection()
+    let dbConnection = await database.getConnection()
     let recordSet = await dbConnection.collection(coll).insertMany(data)
 
     if (recordSet.result.n < 1) {
-      log.error(ctx, 'Failed to Insert Data')
-      return false
+      log.send('mongo-repo-insert-all').error('Failed to Insert Data')
+      return wrapper.error('Failed to Insert Data')
     }
-
-    return true
+    return wrapper.data(convertDefaultTimestamp(data))
   } catch(err) {
-    log.error(ctx, common.strToTitleCase(err.message))
-    return false
-  }  
+    log.send('mongo-repo-insert-all').error(common.strToTitleCase(err.message))
+    return wrapper.error(common.strToTitleCase(err.message))
+  }
 }
 
 // -------------------------------------------------
 // DB UpdateOne Function
 async function updateOne(coll, params, query) {
-  let ctx = 'mongo-repo-update-one'
-
   try {
-    let dbConnection = database.getConnection()
-    let recordSet = await dbConnection.collection(coll).update(params, query, { upsert: true })
+    let dbConnection = await database.getConnection()
+    let recordSet = await dbConnection.collection(coll).update(params, query, { upsert: true})
 
     if (recordSet.result.nModified < 0) {
-      log.error(ctx, 'Failed to Update Data')
-      return false
+      log.send('mongo-repo-update-one').error('Failed to Update Data')
+      return wrapper.error('Failed to Update Data')
     }
-
-    return true
+    return wrapper.data(convertDefaultTimestamp(recordSet))
   } catch(err) {
-    log.error(ctx, common.strToTitleCase(err.message))
-    return false
+    log.send('mongo-repo-update-one').error(common.strToTitleCase(err.message))
+    return wrapper.error(common.strToTitleCase(err.message))
   }
 }
 
@@ -146,21 +167,32 @@ async function updateOne(coll, params, query) {
 // -------------------------------------------------
 // DB CountData Function
 async function countData(coll, params) {
-  let ctx = 'mongo-repo-count-data'
-
   try {
-    let dbConnection = database.getConnection()
+    let dbConnection = await database.getConnection()
     let recordSet = await dbConnection.collection(coll).count(params)
 
     if (validate.isEmpty(recordSet)) {
-      log.warn(ctx, 'Empty RecordSet Data')
-      return
+      log.send('mongo-repo-count-data').warn('Empty RecordSet Data')
+      return wrapper.error('Empty RecordSet Data')
     }
-
-    return recordSet
+    return wrapper.data(recordSet)
   } catch(err) {
-    log.error(ctx, common.strToTitleCase(err.message))
-    return
+    log.send('mongo-repo-count-data').error(common.strToTitleCase(err.message))
+    return wrapper.error(common.strToTitleCase(err.message))
+  }
+}
+
+// -------------------------------------------------
+// DB CountData Function
+async function findMeta(coll, params, page, limit) {
+  let counter = await countData(coll, params)
+  let lastPage = Math.ceil(counter.data / limit)
+  page = page <= 1 ? 1 : lastPage < page ? lastPage : page
+  return {
+    currentPage: page,
+    perPage: limit,
+    totalData: counter.data,
+    lastPage: lastPage
   }
 }
 
@@ -170,9 +202,12 @@ async function countData(coll, params) {
 module.exports = {
   find,
   findOne,
-  findAll,
+  findMany,
+  findAggregateOne,
+  findAggregate,
   insertOne,
   insertAll,
   updateOne,
-  countData
+  countData,
+  findMeta
 }

@@ -1,18 +1,18 @@
-const response = require('../../../../pkg/utils/response')
-const healthz = require('../../../../pkg/utils/healthz')
+const wrapper = require('../../../../pkg/utils/wrapper')
+const healthz = require('../../../../pkg/utils/health')
 
 
 // -------------------------------------------------
 // Index Root Function
-async function index(req, res) {
-  response.resSuccess(res, 'Codebase NodeJS REST is running')
+function index(req, res) {
+  wrapper.response(res, 'success', wrapper.data(''), 'Codebase NodeJS REST is running')
 }
 
 
 // -------------------------------------------------
 // Index Health Function
-async function health(req, res) {
-  await healthz.healthCheck(res)
+function health(req, res) {
+  healthz.healthCheck(res)
 }
 
 

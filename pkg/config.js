@@ -121,6 +121,20 @@ const schema = convict({
     default: 'Asia/Jakarta',
     env: 'NODE_TIMEZONE'
   },
+  internalAuth: {
+    username: {
+      doc: 'Internal Auth Username',
+      format: String,
+      default: '',
+      env: 'INTERNAL_AUTH_USERNAME'
+    },
+    password: {
+      doc: 'Internal Auth Password',
+      format: String,
+      default: '',
+      env: 'INTERNAL_AUTH_PASSWORD'
+    },
+  },
   jwt: {
     issuer: {
       doc: 'JWT Issuer',
@@ -192,7 +206,7 @@ const schema = convict({
       default: '',
       env: 'STORE_DRIVER'
     },
-    endPoint: {
+    endpoint: {
       doc: 'Storage Endpoint',
       format: String,
       default: '',
@@ -242,7 +256,6 @@ const schema = convict({
     }
   }
 })
-
 schema.loadFile('./misc/configs/' + schema.get('env')  + '.json')
 schema.validate({allowed: 'strict'})
 env.config()

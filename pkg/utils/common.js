@@ -13,10 +13,21 @@ function strSpaceToUnderscore(str) {
   return str.replace (/ /g, '_')
 }
 
+const isJSON = (str) => {
+  if (!str) return false
+  str = str.replace(new RegExp('\\\\(?:["\\\\\\/bfnrt]|u[0-9a-fA-F]{4})', 'g'), '@')
+  const regex = new RegExp('"[^"\\\\\\n\\r]*"|true|false|null|-?\\d+'+
+    '(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?', 'g')
+  str = str.replace(regex, ']')
+  str = str.replace(/(?:^|:|,)(?:\s*\[)+/g, '')
+  return (/^[\],:{}\s]*$/).test(str)
+}
+
 
 // -------------------------------------------------
 // Export Module
 module.exports = {
   strToTitleCase,
-  strSpaceToUnderscore
+  strSpaceToUnderscore,
+  isJSON
 }

@@ -12,23 +12,28 @@ var dbPool
 
 // -------------------------------------------------
 // DB Get Connection Function
-function getConnection() {
+async function getConnection() {
   if (dbPool === undefined) {
-    dbPool = mysql.createPool({
-      host: config.schema.get('db.host'),
-      port: config.schema.get('db.port'),
-      user: config.schema.get('db.username'),
-      password: config.schema.get('db.password'),
-      database: config.schema.get('db.name'),
-      timezone: config.schema.get('timezone')
-    })
+    try {
+      dbPool = await mysql.createPool({
+        host: config.schema.get('db.host'),
+        port: config.schema.get('db.port'),
+        user: config.schema.get('db.username'),
+        password: config.schema.get('db.password'),
+        database: config.schema.get('db.name'),
+        timezone: config.schema.get('timezone')
+      })
 
-    if (! getPing()) {
-      log.send('mysql-db-get-connection').error('Cannot Get MySQL Database Ping')
+      if (! await getPing()) {
+        log.send('mysql-db-get-connection').error('Cannot Get MySQL Database Ping')
+        process.exit(1)
+      }
+      
+      return dbPool
+    } catch(err) {
+      log.send('mysql-db-get-connection').error(common.strToTitleCase(err.message))
       process.exit(1)
     }
-    
-    return dbPool
   } else {
     return dbPool
   }
@@ -37,14 +42,12 @@ function getConnection() {
 
 // -------------------------------------------------
 // DB Get Ping Function
-function getPing() {
-  let ctx = 'mysql-db-get-ping'
-
+async function getPing() {
   try {
     let dbStatus = false
 
     if (dbPool !== undefined) {
-      dbStatus = new Promise(function(resolve, reject) {
+      dbStatus = await new Promise(function(resolve, reject) {
         dbPool.getConnection(function(err, dbConn) {
           if (err) reject(err)
 
@@ -62,7 +65,7 @@ function getPing() {
 
     return dbStatus
   } catch(err) {
-    log.error(ctx, common.strToTitleCase(err.message))
+    log.send('mysql-db-get-ping').error(common.strToTitleCase(err.message))
     return false
   }
 }
@@ -71,8 +74,6 @@ function getPing() {
 // -------------------------------------------------
 // DB Close Connection Function
 function closeConnection(){
-  let ctx = 'mysql-db-close-connection'
-
   try {
     if (dbPool !== undefined) {
       dbPool.end(function(err) {
@@ -80,9 +81,9 @@ function closeConnection(){
       })
     }
 
-    log.error(ctx, 'Successfully Close MySQL Database Connection')
+    log.send('mysql-db-close-connection').error('Successfully Close MySQL Database Connection')
   } catch(err) {
-    log.error(ctx, common.strToTitleCase(err.message))
+    log.send('mysql-db-close-connection').error(common.strToTitleCase(err.message))
   }
 }
 

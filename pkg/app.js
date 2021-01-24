@@ -9,11 +9,13 @@ const dbMySQL = require('./databases/mysql/dbs')
 const storeS3 = require('./stores/S3')
 
 const common = require('./utils/common')
-const response = require('./utils/response')
+const wrapper = require('./utils/wrapper')
+const errorCase = require('./utils/error_case')
 const log = require('./utils/logger')
+const path = require('path')
 
 const app = express()
-const ctx = 'service-main'
+
 
 // -------------------------------------------------
 // Database Module
@@ -42,7 +44,7 @@ app.use(helmet())
 
 app.use(express.json())
 
-app.use(express.urlencoded({ 
+app.use(express.urlencoded({
   extended: false,
   limit: config.schema.get('server.upload.limit') + 'mb'
 }))
@@ -54,25 +56,29 @@ app.use(function (req, res, next) {
   next()
 })
 
+app.use('/public', express.static(path.resolve('./misc/public')))
 
 // -------------------------------------------------
 // Load Router Handler to Express Module
 app.use('/', require('../internal/routes/index'))
-
+app.use('/api/user/v1', require('../internal/routes/user'))
 
 // -------------------------------------------------
 // Load Default Router Handler to Express Module
 app.get('/favicon.ico', (req, res) => res.status(204))
 
 app.use(function (req, res) {
-  log.warn(ctx, 'No Method ' + req.method + ' at URI ' + req.url)
-  response.resNotFound(res, 'No Method ' + req.method + ' at URI ' + req.url)
+  const msg = 'Not Found Method ' + req.method + ' at URI ' + req.url
+  log.send('http-access').warn(msg)
+  wrapper.response(res, 'fail', wrapper.error(errorCase.notFound('route', msg)), 'Route')
 })
 
-app.use(function (err, req, res, next) {
-  log.error(ctx, common.strToTitleCase(err.message))
-  response.resInternalError(res, common.strToTitleCase(err.message))
+app.use(function (err, req, res) {
+  const msg = common.strToTitleCase(err.message)
+  log.send('http-access').warn(msg)
+  wrapper.response(res, 'fail', wrapper.error(errorCase.internalError('route', msg)), 'Route')
 })
+
 
 
 // -------------------------------------------------
